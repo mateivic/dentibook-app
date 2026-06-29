@@ -1,26 +1,80 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@theme {
+    --color-brand: var(--tenant-primary, #2563eb);
+    --color-brand-accent: var(--tenant-accent, #1e40af);
+    --color-surface: #ffffff;
+    --color-surface-muted: #f8fafc;
+    --color-ink: #0f172a;
+    --color-ink-muted: #64748b;
+    --color-border: #e2e8f0;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+    /* Body + display fonts fall back to the built-in next/font defaults
+       (Geist / Cormorant) unless a tenant overrides via --tenant-font-*. */
+    --font-sans: var(--tenant-font-sans, var(--font-geist-sans)), system-ui,
+        -apple-system, sans-serif;
+    --font-display: var(
+            --tenant-font-display,
+            var(--font-display-default)
+        ),
+        Georgia, "Times New Roman", serif;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+    --radius-brand: var(--tenant-radius, 0.5rem);
+
+    --animate-fade-up: fade-up 0.5s ease-out both;
+    --animate-pop-in: pop-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    --animate-draw-check: draw-check 0.4s ease-out 0.25s both;
+    --animate-ken-burns: ken-burns 24s ease-in-out infinite alternate;
+
+    @keyframes ken-burns {
+        from {
+            transform: scale(1.05) translate(0, 0);
+        }
+        to {
+            transform: scale(1.16) translate(-2%, -1.5%);
+        }
+    }
+
+    @keyframes fade-up {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes pop-in {
+        from {
+            opacity: 0;
+            transform: scale(0.6);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    @keyframes draw-check {
+        from {
+            stroke-dashoffset: 24;
+        }
+        to {
+            stroke-dashoffset: 0;
+        }
+    }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+    color: var(--color-ink);
+    background: var(--color-surface);
+    font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
 }
