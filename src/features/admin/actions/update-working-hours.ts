@@ -1,7 +1,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { getSupabaseServerClient } from '@/lib/supabase/server';
+import { getSupabaseServiceRoleClient } from '@/lib/supabase/server';
+import { getAuthedAdmin } from '@/features/admin/lib/auth';
 import type { WorkingHours } from '@/lib/supabase/types';
 
 const WEEKDAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
@@ -16,6 +17,11 @@ export async function updateWorkingHours(
     _prev: UpdateWorkingHoursState,
     formData: FormData,
 ): Promise<UpdateWorkingHoursState> {
+    // Authorize in code — the app does not rely on RLS (tables have RLS enabled
+    // but no policies). Mirrors the settings/services admin actions.
+    const admin = await getAuthedAdmin();
+    if (!admin) return { ok: false, error: 'Unauthorized' };
+
     const locationId = String(formData.get('locationId') ?? '');
     if (!locationId) return { ok: false, error: 'Missing location' };
 
@@ -37,13 +43,22 @@ export async function updateWorkingHours(
         working_hours[day] = { open, close };
     }
 
-    const supabase = await getSupabaseServerClient();
-    const { error } = await supabase
+    const supabase = getSupabaseServiceRoleClient();
+
+    // Scope the write to the admin's tenant: a forged locationId from another
+    // tenant matches 0 rows. `.select()` makes a 0-row write surface as an error
+    // instead of a silent "success".
+    const { data: updated, error } = await supabase
         .from('locations')
         .update({ working_hours })
-        .eq('id', locationId);
+        .eq('id', locationId)
+        .eq('tenant_id', admin.tenantId)
+        .select('id');
 
     if (error) return { ok: false, error: error.message };
+    if (!updated || updated.length === 0) {
+        return { ok: false, error: 'Location not found' };
+    }
 
     revalidatePath('/admin/working-hours');
     return { ok: true };

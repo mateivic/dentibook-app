@@ -65,4 +65,16 @@ export const en: Dictionary = {
             "We look forward to seeing you. You'll receive your appointment confirmation by email.",
         again: "Book another appointment",
     },
+    cancel: {
+        heading: "Cancel your reservation?",
+        subtext: "Please confirm that you want to cancel the reservation below.",
+        confirm: "Cancel reservation",
+        confirming: "Cancelling…",
+        keep: "Keep reservation",
+        alreadyHeading: "Already cancelled",
+        alreadyText: "This reservation was already cancelled.",
+        doneHeading: "Reservation cancelled",
+        doneText:
+            "Your reservation has been cancelled and the calendar event removed. A confirmation email is on its way.",
+    },
 };

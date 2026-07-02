@@ -342,7 +342,8 @@ export function renderClientCancellation(
     logoUrl: input.logoUrl,
     primaryColor: input.primaryColor,
     greetingName: input.clientName,
-    message: "Vaša rezervacija je uspješno otkazana.",
+    message:
+      "Otkazali smo Vašu rezervaciju. Žao nam je što ne možete doći i nadamo se da ćemo se uskoro vidjeti. Novi termin možete rezervirati ispod za manje od minute.",
     details: [
       { label: "Datum", value: date, sub: weekday },
       { label: "Vrijeme", value: time },

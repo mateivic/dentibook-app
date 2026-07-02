@@ -8,7 +8,10 @@ interface PageProps {
   searchParams: Promise<{ google?: string; message?: string }>;
 }
 
-export default async function ConnectGooglePage({ params, searchParams }: PageProps) {
+export default async function ConnectGooglePage({
+  params,
+  searchParams,
+}: PageProps) {
   const { subdomain } = await params;
   const sp = await searchParams;
 
@@ -41,8 +44,8 @@ export default async function ConnectGooglePage({ params, searchParams }: PagePr
 
       <p className="mb-4 text-sm text-ink-muted">
         Each location can be linked to its own Google account. Bookings will be
-        written to that account&apos;s primary calendar and conflict-checked via
-        freeBusy.
+        written to that account&apos;s primary calendar, so you don&apos;t have
+        check in-app calendar every time.
       </p>
 
       {bundle.locations.length === 0 ? (
@@ -56,27 +59,44 @@ export default async function ConnectGooglePage({ params, searchParams }: PagePr
             return (
               <li key={location.id}>
                 <Card>
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
                       <p className="font-medium">{location.name}</p>
                       {integration ? (
                         <p className="mt-1 text-sm text-emerald-700">
-                          Connected — {integration.google_email ?? "Google account"}
+                          Connected —{" "}
+                          {integration.google_email ?? "Google account"}
                         </p>
                       ) : (
-                        <p className="mt-1 text-sm text-ink-muted">Not connected</p>
+                        <p className="mt-1 text-sm text-ink-muted">
+                          Not connected
+                        </p>
                       )}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <form action="/admin/connect-google/start" method="GET">
-                        <input type="hidden" name="locationId" value={location.id} />
-                        <Button type="submit" variant={integration ? "secondary" : "primary"}>
+                        <input
+                          type="hidden"
+                          name="locationId"
+                          value={location.id}
+                        />
+                        <Button
+                          type="submit"
+                          variant={integration ? "secondary" : "primary"}
+                        >
                           {integration ? "Reconnect" : "Connect"}
                         </Button>
                       </form>
                       {integration && (
-                        <form action="/admin/connect-google/disconnect" method="POST">
-                          <input type="hidden" name="locationId" value={location.id} />
+                        <form
+                          action="/admin/connect-google/disconnect"
+                          method="POST"
+                        >
+                          <input
+                            type="hidden"
+                            name="locationId"
+                            value={location.id}
+                          />
                           <Button type="submit" variant="destructive">
                             Disconnect
                           </Button>

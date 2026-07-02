@@ -55,7 +55,7 @@ export function ApplyToAllModal({ sourceLocationId, onClose }: ApplyToAllModalPr
             onClick={onClose}
         >
             <div
-                className="w-full max-w-2xl rounded-lg border border-border bg-white p-6 shadow-xl animate-in zoom-in-95 duration-200"
+                className="w-full max-w-2xl rounded-lg border border-border bg-white p-4 shadow-xl animate-in zoom-in-95 duration-200 sm:p-6"
                 onClick={(e) => e.stopPropagation()}
             >
                 <h2 className="text-lg font-semibold">Apply to all locations</h2>

@@ -1,11 +1,15 @@
-export default function CancelDone() {
+import { CancelShell } from '@/features/booking/components/cancel-shell';
+import { CancelContent } from '@/features/booking/components/cancel-content';
+
+interface PageProps {
+    params: Promise<{ subdomain: string; token: string }>;
+}
+
+export default async function CancelDone({ params }: PageProps) {
+    const { subdomain } = await params;
     return (
-        <main className="mx-auto w-full max-w-xl flex-1 px-6 py-12 text-center">
-            <h1 className="text-2xl font-semibold">Reservation cancelled</h1>
-            <p className="mt-3 text-ink-muted">
-                Your reservation has been cancelled and the calendar event removed. A confirmation
-                email is on its way.
-            </p>
-        </main>
+        <CancelShell subdomain={subdomain}>
+            <CancelContent variant="done" />
+        </CancelShell>
     );
 }

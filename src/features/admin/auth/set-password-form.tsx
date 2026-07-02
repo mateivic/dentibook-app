@@ -15,7 +15,7 @@ export function SetPasswordForm({ setPasswordAction }: SetPasswordFormProps) {
   const { state, formAction, pending } = useAuthAction(setPasswordAction);
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 items-center px-6 py-12">
+    <main className="mx-auto flex w-full max-w-md flex-1 items-center px-4 py-12 sm:px-6">
       <Card className="w-full">
         <h1 className="text-xl font-semibold">Set your password</h1>
         <p className="mt-2 text-sm text-ink-muted">

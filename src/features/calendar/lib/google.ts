@@ -155,9 +155,6 @@ export async function createCalendarEvent(
       description: event.description,
       start: { dateTime: event.startIso, timeZone: event.timeZone },
       end: { dateTime: event.endIso, timeZone: event.timeZone },
-      attendees: event.attendeeEmail
-        ? [{ email: event.attendeeEmail }]
-        : undefined,
     },
   });
   if (!resp.data.id) throw new Error("Calendar API did not return an event id");

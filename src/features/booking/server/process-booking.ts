@@ -1,15 +1,10 @@
 import "server-only";
 import { after } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { OAuth2Client } from "google-auth-library";
 import { getSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import { sendBookingConfirmationEmails } from "@/features/booking/server/booking-emails";
-import {
-  createCalendarEvent,
-  getCalendarClientForLocation,
-  getCalendarEventStatus,
-  listBusyWindows,
-} from "@/features/calendar/lib/google";
+import { getAvailabilityConnector } from "@/features/availability/connectors/factory";
+import type { AvailabilityConnector } from "@/features/availability/connectors/types";
 import { isWithinWorkingHours } from "@/features/booking/lib/working-hours";
 import type { WorkingHours } from "@/lib/supabase/types";
 
@@ -112,22 +107,12 @@ export async function processBooking(
     return { ok: false, status: 400, error: "Slot is outside working hours" };
   }
 
-  const { client: oauthClient, integration } =
-    await getCalendarClientForLocation(supabase, location.id);
-  if (!oauthClient || !integration) {
-    return {
-      ok: false,
-      status: 503,
-      error: "Location is not configured for booking",
-    };
-  }
+  const connector = await getAvailabilityConnector(supabase, location.id);
 
   try {
     const startMs = startTime.getTime();
     const endMs = endTime.getTime();
-    const busy = await listBusyWindows(
-      oauthClient,
-      integration.google_calendar_id,
+    const busy = await connector.listBusyWindows(
       startTime.toISOString(),
       endTime.toISOString(),
       location.timezone,
@@ -171,16 +156,16 @@ export async function processBooking(
     .select("id")
     .single();
 
-  // A 23P01 (no-overlap) violation can be stale: the conflicting reservation's
-  // Google event may have been deleted in Google (the source of truth for
-  // availability), leaving an orphan DB row. Cancel any such stale rows and
-  // retry once. A genuine concurrent booking — whose event still exists — is
-  // left intact and still 409s below.
-  if (resErr?.code === "23P01") {
+  // A 23P01 (no-overlap) violation can be stale when an external calendar is the
+  // source of truth: the conflicting reservation's Google event may have been
+  // deleted in Google, leaving an orphan DB row. Cancel any such stale rows and
+  // retry once. With the database connector there is no external authority — a
+  // 23P01 is always a genuine conflict — so we skip the heal entirely and fall
+  // through to the 409 below.
+  if (resErr?.code === "23P01" && connector.kind === "google") {
     const healed = await cancelStaleConflicts(
       supabase,
-      oauthClient,
-      integration.google_calendar_id,
+      connector,
       input.locationId,
       startTime,
       endTime,
@@ -218,35 +203,24 @@ export async function processBooking(
     .map((s) => s.name)
     .join(", ")}`;
 
-  let googleEventId: string | null = null;
-  let syncStatus: "SYNCED" | "FAILED" = "FAILED";
-  try {
-    googleEventId = await createCalendarEvent(
-      oauthClient,
-      integration.google_calendar_id,
-      {
-        summary,
-        description: buildEventDescription(
-          input,
-          services.map((s) => s.name),
-        ),
-        startIso: startTime.toISOString(),
-        endIso: endTime.toISOString(),
-        timeZone: location.timezone,
-        attendeeEmail: input.client.email,
-      },
-    );
-    syncStatus = "SYNCED";
-  } catch (err) {
-    console.error("[processBooking] calendar event insert failed", err);
-  }
+  const eventResult = await connector.createEvent({
+    summary,
+    description: buildEventDescription(
+      input,
+      services.map((s) => s.name),
+    ),
+    startIso: startTime.toISOString(),
+    endIso: endTime.toISOString(),
+    timeZone: location.timezone,
+    attendeeEmail: input.client.email,
+  });
 
   await supabase
     .from("reservations")
     .update({
-      google_event_id: googleEventId,
-      google_sync_status: syncStatus,
-      status: syncStatus === "SYNCED" ? "CONFIRMED" : "PENDING",
+      google_event_id: eventResult.externalEventId,
+      google_sync_status: eventResult.syncStatus,
+      status: eventResult.confirmed ? "CONFIRMED" : "PENDING",
     })
     .eq("id", reservation.id);
 
@@ -258,7 +232,7 @@ export async function processBooking(
       tenantName: tenant.name,
       tenantLogoPath: tenant.logo_path,
       tenantHeroPath: tenant.hero_path,
-      primaryColor: tenant.config?.primary ?? null,
+      primaryColor: tenant.config?.styles?.primary ?? null,
       clientName: `${input.client.firstName} ${input.client.lastName}`,
       clientEmail: input.client.email,
       clientPhone: input.client.phone,
@@ -281,7 +255,7 @@ export async function processBooking(
     ok: true,
     reservationId: reservation.id,
     cancellationToken,
-    status: syncStatus === "SYNCED" ? "CONFIRMED" : "PENDING",
+    status: eventResult.confirmed ? "CONFIRMED" : "PENDING",
   };
 }
 
@@ -349,8 +323,7 @@ function generateCancellationToken(): string {
 // are still blocked by the no-overlap constraint.
 async function cancelStaleConflicts(
   supabase: SupabaseClient,
-  client: OAuth2Client,
-  calendarId: string,
+  connector: AvailabilityConnector,
   locationId: string,
   startTime: Date,
   endTime: Date,
@@ -372,11 +345,8 @@ async function cancelStaleConflicts(
     let deleted: boolean;
     try {
       deleted =
-        (await getCalendarEventStatus(
-          client,
-          calendarId,
-          conflict.google_event_id,
-        )) === "deleted";
+        (await connector.getEventStatus(conflict.google_event_id)) ===
+        "deleted";
     } catch (err) {
       console.error(
         "[processBooking] could not verify calendar event; keeping reservation",

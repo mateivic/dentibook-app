@@ -1,10 +1,8 @@
 // Hand-written for v1. Regenerate later via:
 //   supabase gen types typescript --project-id <ref> > src/lib/supabase/types.ts
 
-export interface TenantConfig {
+export interface TenantStylesConfig {
   primary?: string;
-  /** @deprecated kept for backwards-compat; prefer `secondary`. */
-  accent?: string;
   secondary?: string;
   /** CSS length applied to button corners, e.g. "9999px" (pill) or "0.5rem". */
   radius?: string;
@@ -12,14 +10,30 @@ export interface TenantConfig {
   fontDisplay?: string;
   /** Google Font family for body text, e.g. "Inter". Defaults to Geist. */
   fontBody?: string;
-  /** Short tagline shown on the intro/hero screen. */
-  tagline?: string;
+}
+
+export interface TenantLangConfig {
   /** Enabled UI languages, e.g. ["hr", "en"]. */
   languages?: string[];
   /** Initial language; must be one of `languages`. Defaults to "hr". */
   defaultLanguage?: string;
+}
+
+export interface TenantSmsConfig {
+  /** Send the day-before SMS reminder (Brevo). Missing = false (off). */
+  enabled?: boolean;
+  /** SMS sender override; sanitized to <=11 alphanumeric chars before use. Missing = derived from tenant name. */
+  senderName?: string;
+}
+
+export interface TenantConfig {
+  styles?: TenantStylesConfig;
+  lang?: TenantLangConfig;
+  sms?: TenantSmsConfig;
   /** Show service prices on the public booking site. Missing = true (visible). */
   showPrices?: boolean;
+  /** Short tagline shown on the intro/hero screen. */
+  tagline?: string;
 }
 
 export type WorkingHoursValue = { open: string; close: string } | null;
@@ -101,7 +115,13 @@ export type ReservationStatus =
   | "CONFIRMED"
   | "CANCELLED"
   | "COMPLETED";
-export type GoogleSyncStatus = "PENDING" | "SYNCED" | "FAILED";
+// "NOT_APPLICABLE" marks a reservation at a location with no external calendar
+// connector — the DB row is the source of truth, nothing to sync.
+export type GoogleSyncStatus =
+  | "PENDING"
+  | "SYNCED"
+  | "FAILED"
+  | "NOT_APPLICABLE";
 
 export interface Reservation {
   id: string;
@@ -116,6 +136,7 @@ export interface Reservation {
   google_sync_status: GoogleSyncStatus;
   cancellation_token: string;
   sms_reminder_sent: boolean;
+  email_reminder_sent: boolean;
   cancelled_at: string | null;
   created_at: string;
 }

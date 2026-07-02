@@ -67,20 +67,22 @@ export function LanguageProvider({
     config,
     children,
 }: LanguageProviderProps) {
+    const lang = config.lang;
+
     // Languages enabled in tenant config, narrowed to those we actually ship.
     const availableLanguages = useMemo(() => {
-        const configured = config.languages?.length
-            ? config.languages
+        const configured = lang?.languages?.length
+            ? lang.languages
             : [DEFAULT_LANGUAGE];
         const supported = configured.filter((l) => l in DICTIONARIES);
         return supported.length ? supported : [DEFAULT_LANGUAGE];
-    }, [config.languages]);
+    }, [lang]);
 
     const initialLanguage = useMemo(() => {
-        const preferred = config.defaultLanguage;
+        const preferred = lang?.defaultLanguage;
         if (preferred && availableLanguages.includes(preferred)) return preferred;
         return availableLanguages[0];
-    }, [config.defaultLanguage, availableLanguages]);
+    }, [lang, availableLanguages]);
 
     // Persisted choice (null on the server / before any selection).
     const stored = useSyncExternalStore(

@@ -15,7 +15,10 @@ export default async function SettingsPage({ params }: PageProps) {
     return (
         <section className="space-y-6">
             <h2 className="text-xl font-semibold">Settings</h2>
-            <SettingsForm showPrices={bundle.tenant.config.showPrices ?? true} />
+            <SettingsForm
+                showPrices={bundle.tenant.config.showPrices ?? true}
+                smsReminders={bundle.tenant.config.sms?.enabled ?? false}
+            />
         </section>
     );
 }

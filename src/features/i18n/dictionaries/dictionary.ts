@@ -66,6 +66,17 @@ export interface Dictionary {
         message: string;
         again: string;
     };
+    cancel: {
+        heading: string;
+        subtext: string;
+        confirm: string;
+        confirming: string;
+        keep: string;
+        alreadyHeading: string;
+        alreadyText: string;
+        doneHeading: string;
+        doneText: string;
+    };
 }
 
 export type ValidationCode = keyof Dictionary["validation"];

@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import {
     updateWorkingHours,
@@ -124,7 +125,7 @@ export function WorkingHoursForm({
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {WEEKDAYS.map(({ key, short, label }) => {
+                {WEEKDAYS.map(({ key, label }) => {
                     const day = days[key];
                     return (
                         <div
@@ -136,31 +137,25 @@ export function WorkingHoursForm({
                                     : "border-brand/30 bg-white",
                             )}
                         >
-                            <div className="flex items-center justify-between">
-                                <div>
+                            <div className="flex items-center justify-between gap-2">
+                                <div className="min-w-0">
                                     <p className="text-sm font-semibold">{label}</p>
-                                    <p className="text-xs uppercase tracking-wider text-ink-muted">
-                                        {short}
-                                    </p>
-                                </div>
-                                <label className="inline-flex items-center gap-2 text-xs">
                                     <span
                                         className={cn(
-                                            "font-medium",
+                                            "text-xs font-medium",
                                             day.closed ? "text-ink-muted" : "text-brand",
                                         )}
                                     >
                                         {day.closed ? "Closed" : "Open"}
                                     </span>
-                                    <input
-                                        type="checkbox"
-                                        checked={!day.closed}
-                                        onChange={(e) =>
-                                            setDay(key, { closed: !e.target.checked })
-                                        }
-                                        className="h-4 w-4 accent-brand"
-                                    />
-                                </label>
+                                </div>
+                                <Switch
+                                    checked={!day.closed}
+                                    onCheckedChange={(open) =>
+                                        setDay(key, { closed: !open })
+                                    }
+                                    aria-label={`${label}: ${day.closed ? "closed" : "open"}`}
+                                />
                             </div>
 
                             <input
@@ -169,37 +164,40 @@ export function WorkingHoursForm({
                                 value={day.closed ? "on" : ""}
                             />
 
-                            <div
-                                className={cn(
-                                    "mt-3 grid grid-cols-2 gap-2 transition-opacity",
-                                    day.closed ? "pointer-events-none opacity-50" : "opacity-100",
-                                )}
-                            >
-                                <div>
-                                    <label className="text-xs text-ink-muted">Open</label>
-                                    <Input
-                                        type="time"
-                                        name={`${key}_open`}
-                                        value={day.open}
-                                        onChange={(e) =>
-                                            setDay(key, { open: e.target.value })
-                                        }
-                                        disabled={day.closed}
-                                    />
+                            {day.closed ? (
+                                <p className="mt-3 text-sm text-ink-muted">
+                                    Closed all day
+                                </p>
+                            ) : (
+                                <div className="mt-3 grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label className="text-xs text-ink-muted">
+                                            Open
+                                        </label>
+                                        <Input
+                                            type="time"
+                                            name={`${key}_open`}
+                                            value={day.open}
+                                            onChange={(e) =>
+                                                setDay(key, { open: e.target.value })
+                                            }
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-ink-muted">
+                                            Close
+                                        </label>
+                                        <Input
+                                            type="time"
+                                            name={`${key}_close`}
+                                            value={day.close}
+                                            onChange={(e) =>
+                                                setDay(key, { close: e.target.value })
+                                            }
+                                        />
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="text-xs text-ink-muted">Close</label>
-                                    <Input
-                                        type="time"
-                                        name={`${key}_close`}
-                                        value={day.close}
-                                        onChange={(e) =>
-                                            setDay(key, { close: e.target.value })
-                                        }
-                                        disabled={day.closed}
-                                    />
-                                </div>
-                            </div>
+                            )}
                         </div>
                     );
                 })}

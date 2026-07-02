@@ -1,9 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseServiceRoleClient } from "@/lib/supabase/server";
-import {
-  getCalendarClientForLocation,
-  listBusyWindows,
-} from "@/features/calendar/lib/google";
+import { getAvailabilityConnector } from "@/features/availability/connectors/factory";
 import { dayWindowUtc } from "@/features/booking/lib/working-hours";
 import { weekdayKey } from "@/features/booking/lib/timezone";
 import {
@@ -102,22 +99,11 @@ export async function GET(
   );
   const dayWindow = dayWindowUtc(date, dayConfig.open, dayConfig.close, tz);
 
-  const { client, integration } = await getCalendarClientForLocation(
-    supabase,
-    location.id,
-  );
-  if (!client || !integration) {
-    return NextResponse.json(
-      { error: "Location is not configured for booking" },
-      { status: 503 },
-    );
-  }
+  const connector = await getAvailabilityConnector(supabase, location.id);
 
   let busy: Array<{ start: number; end: number }> = [];
   try {
-    const windows = await listBusyWindows(
-      client,
-      integration.google_calendar_id,
+    const windows = await connector.listBusyWindows(
       dayWindow.startUtc.toISOString(),
       dayWindow.endUtc.toISOString(),
       tz,

@@ -42,3 +42,39 @@ export async function updateShowPrices(showPrices: boolean): Promise<UpdateSetti
     revalidatePath("/", "layout");
     return { ok: true };
 }
+
+// Updates the per-tenant "send day-before SMS reminders" toggle in
+// tenants.config JSONB. Merges so other config keys survive. Same authz +
+// service-role pattern as updateShowPrices.
+export async function updateSmsReminders(
+    smsReminders: boolean,
+): Promise<UpdateSettingsResult> {
+    const admin = await getAuthedAdmin();
+    if (!admin) return { ok: false, error: "Unauthorized" };
+
+    const supabase = getSupabaseServiceRoleClient();
+
+    const { data: row, error: readErr } = await supabase
+        .from("tenants")
+        .select("config")
+        .eq("id", admin.tenantId)
+        .maybeSingle();
+    if (readErr) return { ok: false, error: readErr.message };
+    if (!row) return { ok: false, error: "Tenant not found" };
+
+    const current = (row.config ?? {}) as TenantConfig;
+    // Nested merge: preserve other sms keys (e.g. senderName) alongside the toggle.
+    const nextConfig: TenantConfig = {
+        ...current,
+        sms: { ...(current.sms ?? {}), enabled: smsReminders },
+    };
+
+    const { error: writeErr } = await supabase
+        .from("tenants")
+        .update({ config: nextConfig })
+        .eq("id", admin.tenantId);
+    if (writeErr) return { ok: false, error: writeErr.message };
+
+    revalidatePath("/admin/settings");
+    return { ok: true };
+}

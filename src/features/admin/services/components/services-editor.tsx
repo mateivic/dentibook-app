@@ -296,7 +296,7 @@ function CategoryCard({
                     <DragHandleIcon />
                 </button>
 
-                <div className="flex-1">
+                <div className="min-w-0 flex-1">
                     {editing ? (
                         <div className="space-y-2">
                             <Input
@@ -330,7 +330,7 @@ function CategoryCard({
                         </div>
                     ) : (
                         <div>
-                            <h3 className="text-base font-semibold">{category.name}</h3>
+                            <h3 className="truncate text-base font-semibold">{category.name}</h3>
                             {category.description && (
                                 <p className="text-sm text-ink-muted">{category.description}</p>
                             )}
@@ -339,7 +339,7 @@ function CategoryCard({
                 </div>
 
                 {!editing && (
-                    <div className="flex gap-1">
+                    <div className="flex shrink-0 gap-1">
                         <Button
                             size="sm"
                             variant="ghost"
@@ -361,7 +361,7 @@ function CategoryCard({
                 )}
             </div>
 
-            <div className="mt-3 ml-9 space-y-2">
+            <div className="mt-3 ml-4 space-y-2 sm:ml-9">
                 <SortableContext
                     items={services.map((s) => s.id)}
                     strategy={verticalListSortingStrategy}
@@ -527,45 +527,51 @@ function ServiceRow({ service, onError, onLocalUpdate, onLocalDelete }: ServiceR
             ref={setNodeRef}
             style={style}
             className={cn(
-                "flex items-center gap-3 rounded-md border border-border bg-white px-3 py-2 text-sm",
+                "flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-border bg-white px-3 py-2 text-sm",
                 isDragging && "opacity-50",
             )}
         >
-            <button
-                type="button"
-                {...attributes}
-                {...listeners}
-                className="cursor-grab text-ink-muted hover:text-ink"
-                aria-label="Drag to reorder service"
-            >
-                <DragHandleIcon />
-            </button>
-            <div className="flex-1">
-                <p className="font-medium">{service.name}</p>
-                {service.description && (
-                    <p className="text-xs text-ink-muted">{service.description}</p>
-                )}
+            <div className="flex min-w-0 flex-1 basis-full items-center gap-3 sm:basis-auto">
+                <button
+                    type="button"
+                    {...attributes}
+                    {...listeners}
+                    className="shrink-0 cursor-grab text-ink-muted hover:text-ink"
+                    aria-label="Drag to reorder service"
+                >
+                    <DragHandleIcon />
+                </button>
+                <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium">{service.name}</p>
+                    {service.description && (
+                        <p className="truncate text-xs text-ink-muted">{service.description}</p>
+                    )}
+                </div>
             </div>
-            <span className="text-ink-muted">{service.duration_minutes} min</span>
-            <span className="text-ink-muted">{formatPrice(service.price)}</span>
-            <div className="flex gap-1">
-                <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setEditing(true)}
-                    className="text-ink-muted"
-                >
-                    Edit
-                </Button>
-                <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={handleDelete}
-                    disabled={isPending}
-                    className="text-red-600 hover:bg-red-50"
-                >
-                    Delete
-                </Button>
+            <div className="flex w-full items-center justify-between gap-3 sm:w-auto">
+                <div className="flex items-center gap-3 text-ink-muted">
+                    <span>{service.duration_minutes} min</span>
+                    <span>{formatPrice(service.price)}</span>
+                </div>
+                <div className="flex shrink-0 gap-1">
+                    <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setEditing(true)}
+                        className="text-ink-muted"
+                    >
+                        Edit
+                    </Button>
+                    <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleDelete}
+                        disabled={isPending}
+                        className="text-red-600 hover:bg-red-50"
+                    >
+                        Delete
+                    </Button>
+                </div>
             </div>
         </div>
     );

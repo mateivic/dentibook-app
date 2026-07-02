@@ -22,7 +22,7 @@ export function LoginForm({
   const reset = useAuthAction(resetAction);
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 items-center px-6 py-12">
+    <main className="mx-auto flex w-full max-w-md flex-1 items-center px-4 py-12 sm:px-6">
       <Card className="w-full">
         <h1 className="text-xl font-semibold">Admin sign-in</h1>
         <p className="mt-2 text-sm text-ink-muted">

@@ -1,10 +1,7 @@
 import "server-only";
 import { after } from "next/server";
 import { getSupabaseServiceRoleClient } from "@/lib/supabase/server";
-import {
-  deleteCalendarEvent,
-  getCalendarClientForLocation,
-} from "@/features/calendar/lib/google";
+import { getAvailabilityConnector } from "@/features/availability/connectors/factory";
 import { sendBookingCancellationEmail } from "@/features/booking/server/booking-emails";
 
 export type CancelBookingResult =
@@ -54,17 +51,11 @@ export async function cancelBookingByToken(
 
   if (reservation.google_event_id) {
     try {
-      const { client, integration } = await getCalendarClientForLocation(
+      const connector = await getAvailabilityConnector(
         supabase,
         reservation.location_id,
       );
-      if (client && integration) {
-        await deleteCalendarEvent(
-          client,
-          integration.google_calendar_id,
-          reservation.google_event_id,
-        );
-      }
+      await connector.deleteEvent(reservation.google_event_id);
     } catch (err) {
       console.error("[cancelBooking] calendar delete failed (non-fatal)", err);
     }
@@ -98,7 +89,7 @@ export async function cancelBookingByToken(
         tenantName: tenant.name,
         tenantLogoPath: tenant.logo_path,
         tenantHeroPath: tenant.hero_path,
-        primaryColor: tenant.config?.primary ?? null,
+        primaryColor: tenant.config?.styles?.primary ?? null,
         clientName: `${client.first_name} ${client.last_name}`,
         clientEmail: client.email as string,
         locationName: location.name,

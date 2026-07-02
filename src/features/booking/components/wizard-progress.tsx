@@ -47,7 +47,8 @@ export function WizardProgress({ currentStep, steps }: WizardProgressProps) {
                             className={cn(
                                 "flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium",
                                 isDone && "bg-brand text-white",
-                                isCurrent && "bg-brand text-white ring-4 ring-brand/20",
+                                isCurrent &&
+                                    "bg-brand text-white shadow-[0_0_7px_3px_color-mix(in_srgb,var(--color-brand)_45%,transparent)]",
                                 !isDone && !isCurrent && "bg-surface-muted text-ink-muted",
                             )}
                             aria-current={isCurrent ? "step" : undefined}

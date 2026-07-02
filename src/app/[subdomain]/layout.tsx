@@ -19,17 +19,17 @@ export default async function SubdomainLayout({
   if (!bundle) notFound();
 
   const cfg = (bundle.tenant.config ?? {}) as TenantConfig;
+  const styles = cfg.styles ?? {};
   const styleVars: Record<string, string> = {};
-  const secondary = cfg.secondary ?? cfg.accent;
-  if (cfg.primary) styleVars["--tenant-primary"] = cfg.primary;
-  if (secondary) styleVars["--tenant-accent"] = secondary;
-  if (cfg.radius) styleVars["--tenant-radius"] = cfg.radius;
-  if (cfg.fontDisplay)
-    styleVars["--tenant-font-display"] = cssFontStack(cfg.fontDisplay);
-  if (cfg.fontBody)
-    styleVars["--tenant-font-sans"] = cssFontStack(cfg.fontBody);
+  if (styles.primary) styleVars["--tenant-primary"] = styles.primary;
+  if (styles.secondary) styleVars["--tenant-accent"] = styles.secondary;
+  if (styles.radius) styleVars["--tenant-radius"] = styles.radius;
+  if (styles.fontDisplay)
+    styleVars["--tenant-font-display"] = cssFontStack(styles.fontDisplay);
+  if (styles.fontBody)
+    styleVars["--tenant-font-sans"] = cssFontStack(styles.fontBody);
 
-  const fontsHref = buildGoogleFontsHref(cfg.fontDisplay, cfg.fontBody);
+  const fontsHref = buildGoogleFontsHref(styles.fontDisplay, styles.fontBody);
 
   return (
     <div style={styleVars} className="flex min-h-screen flex-col">
