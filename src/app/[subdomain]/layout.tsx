@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { getTenantBundlePublic } from "@/lib/tenant";
 import { ThemeProvider } from "@/features/tenant-theme/theme-provider";
 import { LanguageProvider } from "@/features/i18n/language-provider";
 import { buildGoogleFontsHref, cssFontStack } from "@/lib/fonts";
+import { getTenantLogoUrl } from "@/lib/supabase/storage";
 import type { TenantConfig } from "@/lib/supabase/types";
 
 interface LayoutProps {
@@ -62,8 +64,19 @@ export async function generateMetadata({
   params,
 }: {
   params: Promise<{ subdomain: string }>;
-}) {
+}): Promise<Metadata> {
   const { subdomain } = await params;
   const bundle = await getTenantBundlePublic(subdomain);
-  return { title: bundle?.tenant.name ?? "Booking" };
+  if (!bundle) return { title: "Booking" };
+
+  const { tenant } = bundle;
+  // Reuse the clinic's uploaded logo as the browser/tab icon. Falls back to
+  // the apex favicon when a tenant has not uploaded a logo yet. The explicit
+  // `icon` link overrides the browser's default /favicon.ico fetch.
+  const logoUrl = getTenantLogoUrl(tenant.logo_path);
+
+  return {
+    title: tenant.name,
+    icons: { icon: logoUrl ?? "/favicon.ico" },
+  };
 }

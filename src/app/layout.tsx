@@ -13,6 +13,7 @@ const cormorant = Cormorant_Garamond({
 export const metadata: Metadata = {
     title: { default: 'Book an Appointment', template: '%s — Book an Appointment' },
     description: 'Online booking for dental clinics.',
+    icons: { icon: '/favicon.ico' },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
