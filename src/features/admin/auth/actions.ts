@@ -1,7 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  getSupabaseServerClient,
+  getSupabaseServiceRoleClient,
+} from "@/lib/supabase/server";
+import { getTenantBundlePublic } from "@/lib/tenant";
 import { buildSubdomainUrl } from "@/lib/url";
 import type { ActionResult } from "./types";
 
@@ -28,9 +32,34 @@ export async function signIn(
   }
 
   const supabase = await getSupabaseServerClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) {
-    return { error: error.message };
+  const { error, data } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+  // Generic message on purpose: a genuine bad password and a valid account
+  // that belongs to a *different* clinic must be indistinguishable, so an
+  // attacker cannot enumerate which accounts exist on which tenant.
+  const invalidCredentials: ActionResult = {
+    error: "Invalid username or password",
+  };
+  if (error || !data.user) {
+    return invalidCredentials;
+  }
+
+  // Enforce the tenant boundary at login. Supabase Auth is global across
+  // tenants, so a valid sign-in for another clinic succeeds above. Resolve the
+  // subdomain's tenant and the user's own tenant; on mismatch, sign the stray
+  // session back out and reject with the same generic error.
+  const service = getSupabaseServiceRoleClient();
+  const [profileResult, bundle] = await Promise.all([
+    service.from("profiles").select("tenant_id").eq("id", data.user.id).maybeSingle(),
+    getTenantBundlePublic(subdomain),
+  ]);
+  const userTenantId = profileResult.data?.tenant_id;
+
+  if (!bundle || !userTenantId || userTenantId !== bundle.tenant.id) {
+    await supabase.auth.signOut();
+    return invalidCredentials;
   }
 
   revalidatePath("/", "layout");
